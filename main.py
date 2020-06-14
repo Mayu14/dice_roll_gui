@@ -10,9 +10,9 @@ from io import BytesIO
 
 srcDir = Path("src")
 fzip = srcDir / Path("sound.zip")
-
+fini = "dice_setting.ini"
 def __set_default(numDice=8, rareRate=3):
-    fname = Path("dice_setting.ini")
+    fname = Path(fini)
     if not fname.exists():
         with open(fname, "w") as f:
             f.write(f"diceNum {numDice}\nrareRate {rareRate}\n")
@@ -89,8 +89,9 @@ def main(numDice, rareRate):
         event, values = window.read()
 
         if event is None:
-            with open(fname, "w") as f:
+            with open(Path(fini), "w") as f:
                 f.write(f"diceNum {numDice}\nrareRate {rareRate}\n")
+            break
 
         if event == "update":
             numDice = values['numDice']
