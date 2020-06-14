@@ -10,6 +10,6 @@ dice_roll_with_sound (training about handling zip and mp3)
 以上
 
 ## 使い方
-- dice_roll.zip`を適当なフォルダにDL
+- `dice_roll.zip`を適当なフォルダにDL
 - 出てきた`dice_roll.exe`をクリックすれば使える
 - プログラム本体と，`src/sound.zip`の位置関係は変えないこと
