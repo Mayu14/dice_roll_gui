@@ -1,11 +1,12 @@
 # -- coding: utf-8 --
 import PySimpleGUI as sg
-import random
+from random import randint
 from pathlib import Path
 from mutagen.mp3 import MP3
-import pygame
-import time
-import zipfile
+from pygame import mixer
+from time import time, sleep
+from zipfile import ZipFile
+from io import BytesIO
 
 srcDir = Path("src")
 fzip = srcDir / Path("sound.zip")
@@ -40,40 +41,39 @@ def __reflesh_window(numDice, window):
     return window
 
 def __dice_roll(numDice):
-    return random.randint(1, numDice)
+    return randint(1, numDice)
 
 def __get_fpath(ori_num=6, rare_num=33, rareRate=3):
-    isRare = random.randint(1,100) <= rareRate
+    isRare = randint(1,100) <= rareRate
     if isRare:
-        target = random.randint(1, rare_num)
+        target = randint(1, rare_num)
         target = Path("yj" + str(target).zfill(2) + ".mp3")
     else:
-        target = random.randint(1, ori_num)
+        target = randint(1, ori_num)
         target = Path(str(target).zfill(3) + ".mp3")
     return target
     # return srcDir / target
 
 def __start_sound(fpath):
-    import io
-    with zipfile.ZipFile(fzip) as myzip:
+    with ZipFile(fzip) as myzip:
         with myzip.open(str(fpath)) as mp3_file:
-            mp3_bin = io.BytesIO(mp3_file.read())
+            mp3_bin = BytesIO(mp3_file.read())
     # fpath = fpath.resolve()
-    pygame.mixer.init()
+    mixer.init()
     # pygame.mixer.music.load(str(fpath))
-    pygame.mixer.music.load(mp3_bin)
+    mixer.music.load(mp3_bin)
     # mp3_length = MP3(fpath).info.length
     mp3_length = MP3(mp3_bin).info.length
     # mp3_length = 1.0
-    pygame.mixer.music.play(1)
-    start = time.time()
+    mixer.music.play(1)
+    start = time()
     return start, mp3_length
 
 def __stop_sound(start, length):
-    wait = length - (time.time() - start)
+    wait = length - (time() - start)
     if wait > 0:
-        time.sleep(wait)
-    pygame.mixer.music.stop()
+        sleep(wait)
+    mixer.music.stop()
     return None
 
 def main(numDice, rareRate):
@@ -89,8 +89,8 @@ def main(numDice, rareRate):
         event, values = window.read()
 
         if event is None:
-            print('exit')
-            break
+            with open(fname, "w") as f:
+                f.write(f"diceNum {numDice}\nrareRate {rareRate}\n")
 
         if event == "update":
             numDice = values['numDice']
@@ -99,11 +99,16 @@ def main(numDice, rareRate):
 
         if event == 'ダイスを振る':
             # ポップアップ
-            fpath = __get_fpath(rareRate=rareRate)
-            start, length = __start_sound(fpath)
+            zip_status = fzip.exists()
+            if zip_status:
+                fpath = __get_fpath(rareRate=rareRate)
+                start, length = __start_sound(fpath)
+            else:
+                sg.popup(f'/src/sound.zipがありません')
             dice = __dice_roll(numDice=numDice)
             sg.popup(f'DICE -> {dice}')
-            __stop_sound(start, length)
+            if zip_status:
+                __stop_sound(start, length)
 
     # セクション 4 - ウィンドウの破棄と終了
     window.close()
